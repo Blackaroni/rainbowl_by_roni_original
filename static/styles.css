@@ -95,9 +95,17 @@ h3 {
 }
 
 h1 {
-  max-width: 12ch;
-  font-size: clamp(2.2rem, 6vw, 4.4rem);
+  max-width: 13ch;
+  font-size: clamp(3.4rem, 8vw, 6.6rem);
   line-height: 0.96;
+}
+
+.hero-tagline {
+  margin: 0.85rem 0 0;
+  max-width: 38rem;
+  color: var(--ink);
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  font-weight: 700;
 }
 
 .hero-copy,
@@ -752,6 +760,14 @@ th {
 
 .insight-bar-fill.sales {
   background: linear-gradient(90deg, #b55d36 0%, #dd9a70 100%);
+}
+
+.insight-bar-fill.profit {
+  background: linear-gradient(90deg, #2f6e55 0%, #64ab89 100%);
+}
+
+.insight-bar-fill.profit.negative {
+  background: linear-gradient(90deg, #8f2d2d 0%, #c85f5f 100%);
 }
 
 .insight-bar-fill.expenses {

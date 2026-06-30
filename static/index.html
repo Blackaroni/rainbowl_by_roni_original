@@ -14,10 +14,11 @@
 
   <header class="hero">
     <div>
-      <p class="eyebrow">Rainbowl</p>
-      <h1>Coordinated colourware orders and cash in one place.</h1>
+      <p class="eyebrow">Parfaits and fruit bowls</p>
+      <h1>Rainbowl by Roni</h1>
+      <p class="hero-tagline">Fresh bowl orders, payments, and cash in one place.</p>
       <p class="hero-copy">
-        Run Rainbowl with a clean catalogue, locked pricing, and a bright workflow built for bowls, bowling pins, and carefully matched colours.
+        Run your parfait and fruit bowl catalogue with locked pricing, clean order records, and a bright workflow built for daily sales.
       </p>
     </div>
     <div class="hero-summary">
@@ -50,9 +51,9 @@
       <div class="panel-header">
         <div>
           <p class="eyebrow">Orders</p>
-          <h2>Capture new orders without losing your margins.</h2>
+          <h2>Capture new parfait and fruit bowl orders without losing profit.</h2>
           <p>
-            Use the same form to enter fresh colour-coordinated orders or correct a wrong item later. Selling and cost prices are read from products and locked on the order screen.
+            Use the same form to enter fresh orders or correct a wrong item later. Selling and cost prices are read from products and locked on the order screen.
           </p>
         </div>
         <div class="panel-badges">
@@ -154,7 +155,7 @@
                 <strong id="summary-total">N0.00</strong>
               </div>
               <div>
-                <span>Margin</span>
+                <span>Profit</span>
                 <strong id="summary-margin">N0.00</strong>
               </div>
             </div>
@@ -602,16 +603,26 @@
       <div class="panel-header">
         <div>
           <p class="eyebrow">Insights</p>
-          <h2>Month-on-month sales, expenses, and cash position.</h2>
-          <p>See which Rainbowl shapes and sizes are moving, compare monthly sales to expenses, and track the cash position that should be sitting in the account.</p>
+          <h2>Month-on-month sales, profit, expenses, and cash position.</h2>
+          <p>See total profit, product profit by month, recorded expenses, and the cash position that should be sitting in the account.</p>
         </div>
       </div>
 
       <section class="table-card">
         <div class="section-heading">
           <div>
+            <h3>Profit summary</h3>
+            <p class="meta">Gross profit uses product selling price minus direct product cost. Net profit subtracts operating expenses but excludes investment, regulatory, equipment, machinery, and setup costs.</p>
+          </div>
+        </div>
+        <div id="insights-profit-summary" class="insight-metrics"></div>
+      </section>
+
+      <section class="table-card">
+        <div class="section-heading">
+          <div>
             <h3>Monthly finance view</h3>
-            <p class="meta">Cash in account is calculated as payments received minus expenses for the month.</p>
+            <p class="meta">Net profit excludes investment, regulatory, equipment, machinery, and setup costs. Cash in account still includes every recorded cash outflow.</p>
           </div>
         </div>
         <div id="insights-finance-grid" class="insight-grid"></div>
@@ -620,8 +631,8 @@
       <section class="table-card">
         <div class="section-heading">
           <div>
-            <h3>Product sales by month</h3>
-            <p class="meta">Each month shows quantity sold, sales value, and margin by product.</p>
+            <h3>Product profit by month</h3>
+            <p class="meta">Each month shows quantity sold, sales value, direct cost, and profit by product.</p>
           </div>
         </div>
         <div id="insights-products-grid" class="insight-grid"></div>

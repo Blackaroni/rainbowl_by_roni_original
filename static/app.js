@@ -759,7 +759,7 @@ function renderOrdersList() {
                   (item) => `
                     <li>
                       <span>${escapeHtml(item.product_name)} | ${item.quantity} x ${formatMoney(item.unit_price)}</span>
-                      <span>${formatMoney(item.line_total)} | margin ${formatMoney(item.line_margin)}</span>
+                      <span>${formatMoney(item.line_total)} | profit ${formatMoney(item.line_margin)}</span>
                     </li>
                   `
                 )
@@ -952,8 +952,48 @@ function renderAccountSnapshotsTable() {
 }
 
 function renderInsights() {
+  renderProfitSummary();
   renderMonthlyFinanceInsights();
   renderMonthlyProductInsights();
+}
+
+function renderProfitSummary() {
+  const container = document.getElementById("insights-profit-summary");
+  const months = state.monthlyInsights.months || [];
+  const totals = months.reduce(
+    (accumulator, month) => {
+      accumulator.sales += Number(month.total_sales || 0);
+      accumulator.grossProfit += Number(month.gross_profit || 0);
+      accumulator.expenses += Number(month.total_expenses || 0);
+      accumulator.profitExpenses += Number(month.profit_expenses || 0);
+      accumulator.netProfit += Number(month.net_profit_after_expenses || 0);
+      return accumulator;
+    },
+    { sales: 0, grossProfit: 0, expenses: 0, profitExpenses: 0, netProfit: 0 }
+  );
+
+  container.innerHTML = `
+    <div class="insight-metric">
+      <span>Total sales</span>
+      <strong>${formatMoney(totals.sales)}</strong>
+    </div>
+    <div class="insight-metric">
+      <span>Gross profit</span>
+      <strong>${formatMoney(totals.grossProfit)}</strong>
+    </div>
+    <div class="insight-metric">
+      <span>Operating expenses</span>
+      <strong>${formatMoney(totals.profitExpenses)}</strong>
+    </div>
+    <div class="insight-metric">
+      <span>Net profit</span>
+      <strong>${formatMoney(totals.netProfit)}</strong>
+    </div>
+    <div class="insight-metric">
+      <span>Cash outflows</span>
+      <strong>${formatMoney(totals.expenses)}</strong>
+    </div>
+  `;
 }
 
 function renderMonthlyFinanceInsights() {
@@ -966,7 +1006,15 @@ function renderMonthlyFinanceInsights() {
 
   const maxValue = Math.max(
     1,
-    ...months.map((month) => Math.max(month.total_sales, month.total_expenses, Math.abs(month.cash_in_account)))
+    ...months.map((month) =>
+      Math.max(
+        month.total_sales,
+        month.gross_profit || 0,
+        month.total_expenses,
+        Math.abs(month.net_profit_after_expenses || 0),
+        Math.abs(month.cash_in_account)
+      )
+    )
   );
 
   container.innerHTML = months
@@ -976,7 +1024,7 @@ function renderMonthlyFinanceInsights() {
           <div class="section-heading">
             <div>
               <h3>${escapeHtml(formatMonthLabel(month.month))}</h3>
-              <p class="meta">Gross sales, expenses, and cash position for the month.</p>
+              <p class="meta">Sales, profit, expenses, and cash position for the month.</p>
             </div>
           </div>
           <div class="insight-metrics">
@@ -985,11 +1033,23 @@ function renderMonthlyFinanceInsights() {
               <strong>${formatMoney(month.total_sales)}</strong>
             </div>
             <div class="insight-metric">
+              <span>Gross profit</span>
+              <strong>${formatMoney(month.gross_profit)}</strong>
+            </div>
+            <div class="insight-metric">
               <span>Total paid</span>
               <strong>${formatMoney(month.total_paid)}</strong>
             </div>
             <div class="insight-metric">
-              <span>Total expenses</span>
+              <span>Operating expenses</span>
+              <strong>${formatMoney(month.profit_expenses)}</strong>
+            </div>
+            <div class="insight-metric">
+              <span>Net profit</span>
+              <strong>${formatMoney(month.net_profit_after_expenses)}</strong>
+            </div>
+            <div class="insight-metric">
+              <span>Cash outflows</span>
               <strong>${formatMoney(month.total_expenses)}</strong>
             </div>
             <div class="insight-metric">
@@ -999,7 +1059,9 @@ function renderMonthlyFinanceInsights() {
           </div>
           <div class="insight-bar-list">
             ${renderInsightBarRow("Sales", month.total_sales, maxValue, "sales")}
-            ${renderInsightBarRow("Expenses", month.total_expenses, maxValue, "expenses")}
+            ${renderInsightBarRow("Gross profit", month.gross_profit, maxValue, "profit")}
+            ${renderInsightBarRow("Operating expenses", month.profit_expenses, maxValue, "expenses")}
+            ${renderInsightBarRow("Net profit", month.net_profit_after_expenses, maxValue, "profit")}
             ${renderInsightBarRow("Cash in account", month.cash_in_account, maxValue, "cash")}
           </div>
         </article>
@@ -1019,7 +1081,7 @@ function renderMonthlyProductInsights() {
   container.innerHTML = months
     .map((month) => {
       const products = month.products || [];
-      const maxValue = Math.max(1, ...products.map((product) => product.total_sales));
+      const maxValue = Math.max(1, ...products.map((product) => Math.abs(product.total_margin || 0)));
       return `
         <article class="insight-card">
           <div class="section-heading">
@@ -1038,10 +1100,14 @@ function renderMonthlyProductInsights() {
                         <div class="insight-bar-row">
                           <div class="insight-bar-label">
                             <span>${escapeHtml(product.product_name)} | Qty ${product.quantity_sold}</span>
-                            <span>${formatMoney(product.total_sales)} | margin ${formatMoney(product.total_margin)}</span>
+                            <span>
+                              Sales ${formatMoney(product.total_sales)}
+                              | Cost ${formatMoney(product.total_cost)}
+                              | Profit ${formatMoney(product.total_margin)}
+                            </span>
                           </div>
                           <div class="insight-bar-track">
-                            <div class="insight-bar-fill sales" style="width: ${product.total_sales ? Math.max(6, (product.total_sales / maxValue) * 100) : 0}%"></div>
+                            <div class="insight-bar-fill profit" style="width: ${product.total_margin ? Math.max(6, (Math.abs(product.total_margin) / maxValue) * 100) : 0}%"></div>
                           </div>
                         </div>
                       `
@@ -1639,7 +1705,7 @@ function isWithinDateRange(value, dateFrom, dateTo) {
 function renderInsightBarRow(label, value, maxValue, tone) {
   const numericValue = Number(value || 0);
   const width = numericValue ? Math.max(6, (Math.abs(numericValue) / maxValue) * 100) : 0;
-  const toneClass = tone === "cash" && numericValue < 0 ? "cash negative" : tone;
+  const toneClass = ["cash", "profit"].includes(tone) && numericValue < 0 ? `${tone} negative` : tone;
   return `
     <div class="insight-bar-row">
       <div class="insight-bar-label">

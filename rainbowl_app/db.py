@@ -1016,7 +1016,8 @@ class Repository:
         sales_query = f"""
             SELECT
                 TO_CHAR(DATE_TRUNC('month', orders.order_date), 'YYYY-MM') AS month,
-                COALESCE(SUM(order_items.line_total), 0) AS total_sales
+                COALESCE(SUM(order_items.line_total), 0) AS total_sales,
+                COALESCE(SUM(order_items.line_margin), 0) AS gross_profit
             FROM {self._table('orders')} AS orders
             JOIN {self._table('order_items')} AS order_items ON order_items.order_id = orders.id
             WHERE orders.fulfillment_status <> 'cancelled'
@@ -1032,7 +1033,27 @@ class Repository:
         expense_query = f"""
             SELECT
                 TO_CHAR(DATE_TRUNC('month', expense_date), 'YYYY-MM') AS month,
-                COALESCE(SUM(amount), 0) AS total_expenses
+                COALESCE(SUM(amount), 0) AS total_expenses,
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN LOWER(TRIM(expense_category)) IN (
+                                'investment',
+                                'investments',
+                                'regulatory',
+                                'equipment',
+                                'machinery',
+                                'business cost',
+                                'business costs',
+                                'businesscost',
+                                'businesscosts'
+                            )
+                            THEN 0
+                            ELSE amount
+                        END
+                    ),
+                    0
+                ) AS profit_expenses
             FROM {self._table('expenses')}
             GROUP BY DATE_TRUNC('month', expense_date)
         """
@@ -1041,6 +1062,7 @@ class Repository:
                 TO_CHAR(DATE_TRUNC('month', orders.order_date), 'YYYY-MM') AS month,
                 products.name AS product_name,
                 COALESCE(SUM(order_items.quantity), 0) AS quantity_sold,
+                COALESCE(SUM(order_items.quantity * order_items.unit_cost), 0) AS total_cost,
                 COALESCE(SUM(order_items.line_total), 0) AS total_sales,
                 COALESCE(SUM(order_items.line_margin), 0) AS total_margin
             FROM {self._table('orders')} AS orders
@@ -1063,9 +1085,12 @@ class Repository:
                 months[month_key] = {
                     "month": month_key,
                     "total_sales": 0.0,
+                    "gross_profit": 0.0,
                     "total_paid": 0.0,
                     "total_expenses": 0.0,
+                    "profit_expenses": 0.0,
                     "net_sales_after_expenses": 0.0,
+                    "net_profit_after_expenses": 0.0,
                     "cash_in_account": 0.0,
                     "products": [],
                 }
@@ -1073,7 +1098,9 @@ class Repository:
 
         for row in sales_rows:
             month = str(row["month"])
-            ensure_month(month)["total_sales"] = round(float(row["total_sales"]), 2)
+            month_row = ensure_month(month)
+            month_row["total_sales"] = round(float(row["total_sales"]), 2)
+            month_row["gross_profit"] = round(float(row["gross_profit"]), 2)
 
         for row in payment_rows:
             month = str(row["month"])
@@ -1081,7 +1108,9 @@ class Repository:
 
         for row in expense_rows:
             month = str(row["month"])
-            ensure_month(month)["total_expenses"] = round(float(row["total_expenses"]), 2)
+            month_row = ensure_month(month)
+            month_row["total_expenses"] = round(float(row["total_expenses"]), 2)
+            month_row["profit_expenses"] = round(float(row["profit_expenses"]), 2)
 
         for row in product_rows:
             month = str(row["month"])
@@ -1089,6 +1118,7 @@ class Repository:
                 {
                     "product_name": str(row["product_name"]),
                     "quantity_sold": round(float(row["quantity_sold"]), 3),
+                    "total_cost": round(float(row["total_cost"]), 2),
                     "total_sales": round(float(row["total_sales"]), 2),
                     "total_margin": round(float(row["total_margin"]), 2),
                 }
@@ -1098,6 +1128,7 @@ class Repository:
         for month in month_rows:
             month["products"].sort(key=lambda row: row["total_sales"], reverse=True)
             month["net_sales_after_expenses"] = round(month["total_sales"] - month["total_expenses"], 2)
+            month["net_profit_after_expenses"] = round(month["gross_profit"] - month["profit_expenses"], 2)
             month["cash_in_account"] = round(month["total_paid"] - month["total_expenses"], 2)
 
         return {"months": month_rows}
