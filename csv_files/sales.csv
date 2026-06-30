@@ -1,0 +1,1 @@
+date,product_id,product_name,customer_id,customer_name,quantity,cost_price,selling_price,payment_status,amount_paid,payment_method,payment_date,fulfilled_at,fulfillment_status,requested_collection_date,discount,notes

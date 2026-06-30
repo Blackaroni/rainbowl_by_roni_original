@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rainbowl</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="/config.js"></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="backdrop backdrop-one"></div>
+  <div class="backdrop backdrop-two"></div>
+
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Rainbowl</p>
+      <h1>Coordinated colourware orders and cash in one place.</h1>
+      <p class="hero-copy">
+        Run Rainbowl with a clean catalogue, locked pricing, and a bright workflow built for bowls, bowling pins, and carefully matched colours.
+      </p>
+    </div>
+    <div class="hero-summary">
+      <div class="metric-card">
+        <span>Total sales</span>
+        <strong id="metric-total-sales">N0.00</strong>
+      </div>
+      <div class="metric-card">
+        <span>Total paid</span>
+        <strong id="metric-total-paid">N0.00</strong>
+      </div>
+      <div class="metric-card">
+        <span>Outstanding</span>
+        <strong id="metric-outstanding">N0.00</strong>
+      </div>
+    </div>
+  </header>
+
+  <nav class="top-nav">
+    <button class="nav-link active" data-view="orders-view" type="button">Orders</button>
+    <button class="nav-link" data-view="customers-view" type="button">Customers</button>
+    <button class="nav-link" data-view="products-view" type="button">Products</button>
+    <button class="nav-link" data-view="expenses-view" type="button">Expenses</button>
+    <button class="nav-link" data-view="accounts-view" type="button">Accounts</button>
+    <button class="nav-link" data-view="insights-view" type="button">Insights</button>
+  </nav>
+
+  <main class="layout">
+    <section id="orders-view" class="panel view active">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Orders</p>
+          <h2>Capture new orders without losing your margins.</h2>
+          <p>
+            Use the same form to enter fresh colour-coordinated orders or correct a wrong item later. Selling and cost prices are read from products and locked on the order screen.
+          </p>
+        </div>
+        <div class="panel-badges">
+          <span class="badge" id="badge-pending-orders">Pending: 0</span>
+          <span class="badge badge-alert" id="badge-delivered-unpaid">Delivered unpaid: 0</span>
+        </div>
+      </div>
+
+      <details id="order-form-section" class="panel-section collapsible-panel" open>
+        <summary class="collapsible-summary">
+          <div>
+            <h3 id="order-form-title">New order</h3>
+            <p id="order-form-mode-copy" class="meta">The starter catalogue is ready. Pick a Rainbowl product and the app will fill the locked prices.</p>
+          </div>
+          <span class="collapsible-chip">Form</span>
+        </summary>
+
+        <div class="collapsible-body">
+          <div class="section-heading">
+            <div>
+              <p class="meta">Complete the order details, then save. You can collapse this whole section whenever you want more room.</p>
+            </div>
+            <button id="cancel-order-edit" class="ghost-button hidden" type="button">Cancel edit</button>
+          </div>
+
+          <form id="order-form" class="compact-form">
+            <div class="form-grid">
+              <label>
+                Customer
+                <select id="order-customer" required>
+                  <option value="">Select customer</option>
+                </select>
+              </label>
+
+              <label>
+                Order date
+                <input id="order-date" type="date" required />
+              </label>
+
+              <label>
+                Collection date
+                <input id="order-collection-date" type="date" />
+              </label>
+
+              <label>
+                Fulfillment status
+                <select id="order-fulfillment-status" required>
+                  <option value="">Select status</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="ready">Ready</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+
+              <label class="create-only-field">
+                Initial payment
+                <input id="order-initial-payment" type="number" min="0" step="0.01" placeholder="Leave blank if unpaid" />
+              </label>
+
+              <label class="create-only-field">
+                Payment method
+                <input id="order-payment-method" type="text" placeholder="Cash, transfer, POS..." />
+              </label>
+
+              <label class="create-only-field">
+                Payment date
+                <input id="order-payment-date" type="date" />
+              </label>
+
+              <label class="full-span">
+                Notes
+                <textarea id="order-notes" rows="3" placeholder="Order notes, delivery notes, special request..."></textarea>
+              </label>
+            </div>
+
+            <div class="items-header">
+              <div>
+                <h3>Order items</h3>
+                <p class="meta">Leave unused rows blank. Use Edit order on a saved order to fix a wrong item.</p>
+              </div>
+              <button id="add-item-row" class="ghost-button" type="button">Add item</button>
+            </div>
+
+            <div id="order-items" class="items-list"></div>
+
+            <div class="order-summary">
+              <div>
+                <span>Subtotal</span>
+                <strong id="summary-subtotal">N0.00</strong>
+              </div>
+              <div>
+                <span>Discount</span>
+                <strong id="summary-discount">N0.00</strong>
+              </div>
+              <div>
+                <span>Total</span>
+                <strong id="summary-total">N0.00</strong>
+              </div>
+              <div>
+                <span>Margin</span>
+                <strong id="summary-margin">N0.00</strong>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button id="order-submit-button" class="primary-button" type="submit">Save order</button>
+            </div>
+          </form>
+        </div>
+      </details>
+
+      <details id="order-list-section" class="table-card collapsible-panel" open>
+        <summary class="collapsible-summary">
+          <div>
+            <h3>Order list</h3>
+            <p class="meta">Filter and collapse the list as needed. Use `*` in searches as a wildcard.</p>
+          </div>
+          <span class="collapsible-chip">List</span>
+        </summary>
+
+        <div class="collapsible-body">
+          <div class="filter-bar orders-filter-bar">
+            <label>
+              Search
+              <input id="order-filter-search" type="text" placeholder="Customer, order, product, notes. Use * as wildcard" />
+            </label>
+            <label>
+              Date from
+              <input id="order-filter-date-from" type="date" />
+            </label>
+            <label>
+              Date to
+              <input id="order-filter-date-to" type="date" />
+            </label>
+            <label>
+              Fulfillment status
+              <select id="order-filter-fulfillment-status">
+                <option value="">All</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="ready">Ready</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </label>
+            <label>
+              Payment status
+              <select id="order-filter-payment-status">
+                <option value="">All</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="partial">Partial</option>
+                <option value="paid">Paid</option>
+              </select>
+            </label>
+            <div class="filter-actions">
+              <button id="clear-order-filters" class="ghost-button" type="button">Clear</button>
+            </div>
+          </div>
+
+          <p id="order-filter-summary" class="meta"></p>
+          <div id="orders-list" class="orders-list"></div>
+          <div id="orders-pagination" class="pagination-bar"></div>
+        </div>
+      </details>
+    </section>
+
+    <section id="customers-view" class="panel view">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Customers</p>
+          <h2>Create customers with automatic IDs.</h2>
+          <p>The next customer ID is assigned for you. Use Edit to update phone numbers, names, or addresses later.</p>
+        </div>
+      </div>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <div>
+            <h3 id="customer-form-title">New customer</h3>
+            <p class="meta">Customer IDs are generated automatically and cannot be duplicated from this form.</p>
+          </div>
+          <button id="cancel-customer-edit" class="ghost-button hidden" type="button">Cancel edit</button>
+        </div>
+
+        <form id="customer-form" class="compact-form">
+          <div class="form-grid">
+            <label>
+              Customer ID
+              <input id="customer-legacy-id" class="readonly-field" type="text" readonly />
+            </label>
+            <label>
+              Customer name
+              <input id="customer-name" type="text" required />
+            </label>
+            <label>
+              Phone number
+              <input id="customer-phone-number" type="text" />
+            </label>
+            <label>
+              Address / location
+              <input id="customer-location" type="text" />
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button id="customer-submit-button" class="primary-button" type="submit">Save customer</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="table-card">
+        <div class="section-heading">
+          <div>
+            <h3>Customer list</h3>
+            <p class="meta">Search across IDs, names, phone numbers, and locations. Use `*` as a wildcard.</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <label>
+            Search
+            <input id="customers-search" type="text" placeholder="ID, name, phone, location" />
+          </label>
+          <label>
+            Location
+            <select id="customers-location-filter">
+              <option value="">All locations</option>
+            </select>
+          </label>
+          <div class="filter-actions">
+            <button id="clear-customer-filters" class="ghost-button" type="button">Clear</button>
+          </div>
+        </div>
+
+        <p id="customers-filter-summary" class="meta"></p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Location</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="customers-table-body"></tbody>
+          </table>
+        </div>
+
+        <div id="customers-pagination" class="pagination-bar"></div>
+      </section>
+    </section>
+
+    <section id="products-view" class="panel view">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Products</p>
+          <h2>Maintain the Rainbowl catalogue.</h2>
+          <p>Starter products RB-01 to RB-04 are preloaded. Order pricing is pulled from here and shown in naira throughout the app.</p>
+        </div>
+      </div>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <div>
+            <h3 id="product-form-title">Add product</h3>
+            <p class="meta">Create a new product or adjust the seeded Rainbowl line from the table below.</p>
+          </div>
+          <button id="cancel-product-edit" class="ghost-button hidden" type="button">Cancel edit</button>
+        </div>
+
+        <form id="product-form" class="compact-form">
+          <div class="form-grid">
+            <label>
+              Product ID
+              <input id="product-legacy-id" type="text" />
+            </label>
+            <label>
+              Product name
+              <input id="product-name" type="text" required />
+            </label>
+            <label>
+              Selling price
+              <input id="product-selling-price" type="number" min="0" step="0.01" required />
+            </label>
+            <label>
+              Cost price
+              <input id="product-cost-price" type="number" min="0" step="0.01" required />
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button id="product-submit-button" class="primary-button" type="submit">Save product</button>
+          </div>
+        </form>
+
+        <article id="product-view-panel" class="detail-card hidden"></article>
+      </section>
+
+      <section class="table-card">
+        <div class="section-heading">
+          <div>
+            <h3>Products</h3>
+            <p class="meta">Search by name, ID, or prices. View, edit, or delete products from the action column.</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <label>
+            Search
+            <input id="products-search" type="text" placeholder="ID, product name, or price" />
+          </label>
+          <label>
+            Min selling price
+            <input id="products-min-price" type="number" min="0" step="0.01" placeholder="0.00" />
+          </label>
+          <label>
+            Max selling price
+            <input id="products-max-price" type="number" min="0" step="0.01" placeholder="100000.00" />
+          </label>
+          <div class="filter-actions">
+            <button id="clear-product-filters" class="ghost-button" type="button">Clear</button>
+          </div>
+        </div>
+
+        <p id="products-filter-summary" class="meta"></p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product ID</th>
+                <th>Name</th>
+                <th>Selling price</th>
+                <th>Cost price</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body"></tbody>
+          </table>
+        </div>
+
+        <div id="products-pagination" class="pagination-bar"></div>
+      </section>
+    </section>
+
+    <section id="expenses-view" class="panel view">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Expenses</p>
+          <h2>Record operational expenses.</h2>
+          <p>Fields stay blank until you enter them. Link an expense to a product only when that connection matters.</p>
+        </div>
+      </div>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <h3>Add expense</h3>
+        </div>
+
+        <form id="expense-form" class="compact-form">
+          <div class="form-grid">
+            <label>
+              Expense date
+              <input id="expense-date" type="date" required />
+            </label>
+            <label>
+              Category
+              <input id="expense-category" type="text" required />
+            </label>
+            <label>
+              Product
+              <select id="expense-product-id">
+                <option value="">No linked product</option>
+              </select>
+            </label>
+            <label>
+              Quantity
+              <input id="expense-quantity" type="number" min="0" step="0.01" />
+            </label>
+            <label>
+              Unit of measure
+              <input id="expense-uom" type="text" />
+            </label>
+            <label>
+              Amount
+              <input id="expense-amount" type="number" min="0" step="0.01" required />
+            </label>
+            <label class="full-span">
+              Item / Description
+              <textarea id="expense-description" rows="3"></textarea>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-button" type="submit">Save expense</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="table-card">
+        <div class="section-heading">
+          <div>
+            <h3>Expenses</h3>
+            <p class="meta">Filter by category, date range, and wildcard search across the whole row, including the expense item or description.</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <label>
+            Search
+            <input id="expenses-search" type="text" placeholder="Category, product, description, amount" />
+          </label>
+          <label>
+            Category
+            <select id="expenses-category-filter">
+              <option value="">All categories</option>
+            </select>
+          </label>
+          <label>
+            Date from
+            <input id="expenses-date-from" type="date" />
+          </label>
+          <label>
+            Date to
+            <input id="expenses-date-to" type="date" />
+          </label>
+          <div class="filter-actions">
+            <button id="clear-expense-filters" class="ghost-button" type="button">Clear</button>
+          </div>
+        </div>
+
+        <p id="expenses-filter-summary" class="meta"></p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Product</th>
+                <th>Item / Description</th>
+                <th>Quantity</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="expenses-table-body"></tbody>
+          </table>
+        </div>
+
+        <div id="expenses-pagination" class="pagination-bar"></div>
+      </section>
+    </section>
+
+    <section id="accounts-view" class="panel view">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Accounts</p>
+          <h2>Track daily account balances.</h2>
+          <p>Daily balance is calculated as brought forward plus paid orders minus expenses, with this form used only for manual adjustments.</p>
+        </div>
+      </div>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <h3>Add account snapshot</h3>
+        </div>
+
+        <form id="account-form" class="compact-form">
+          <div class="form-grid">
+            <label>
+              Snapshot date
+              <input id="account-date" type="date" required />
+            </label>
+            <label>
+              Brought forward
+              <input id="account-opening-balance" type="number" step="0.01" placeholder="Leave blank to carry forward" />
+            </label>
+            <label>
+              Manual inflow
+              <input id="account-money-in" type="number" step="0.01" />
+            </label>
+            <label>
+              Manual outflow
+              <input id="account-money-out" type="number" step="0.01" />
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-button" type="submit">Save balance row</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="table-card">
+        <div class="section-heading">
+          <div>
+            <h3>Daily balances</h3>
+            <p class="meta">Filter by date range or search across brought forward, inflow, outflow, and balance. Paid orders feed inflow automatically and expenses feed outflow automatically.</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <label>
+            Search
+            <input id="accounts-search" type="text" placeholder="Date, brought forward, inflow, outflow, balance" />
+          </label>
+          <label>
+            Date from
+            <input id="accounts-date-from" type="date" />
+          </label>
+          <label>
+            Date to
+            <input id="accounts-date-to" type="date" />
+          </label>
+          <div class="filter-actions">
+            <button id="clear-account-filters" class="ghost-button" type="button">Clear</button>
+          </div>
+        </div>
+
+        <p id="accounts-filter-summary" class="meta"></p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Brought forward</th>
+                <th>Inflow</th>
+                <th>Outflow</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="accounts-table-body"></tbody>
+          </table>
+        </div>
+
+        <div id="accounts-pagination" class="pagination-bar"></div>
+      </section>
+    </section>
+
+    <section id="insights-view" class="panel view">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Insights</p>
+          <h2>Month-on-month sales, expenses, and cash position.</h2>
+          <p>See which Rainbowl shapes and sizes are moving, compare monthly sales to expenses, and track the cash position that should be sitting in the account.</p>
+        </div>
+      </div>
+
+      <section class="table-card">
+        <div class="section-heading">
+          <div>
+            <h3>Monthly finance view</h3>
+            <p class="meta">Cash in account is calculated as payments received minus expenses for the month.</p>
+          </div>
+        </div>
+        <div id="insights-finance-grid" class="insight-grid"></div>
+      </section>
+
+      <section class="table-card">
+        <div class="section-heading">
+          <div>
+            <h3>Product sales by month</h3>
+            <p class="meta">Each month shows quantity sold, sales value, and margin by product.</p>
+          </div>
+        </div>
+        <div id="insights-products-grid" class="insight-grid"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+</body>
+</html>
